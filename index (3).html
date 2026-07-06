@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="ht">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>KayeKlè POS</title>
+    <!-- Tailwind CSS Pou bèl entèfas senp -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ink: { 900:'#0F1E1A', 800:'#132821', 700:'#1B362C', 600:'#234536' },
+                        gold: { 500:'#E3B23C', 600:'#C99423', 400:'#F0CB6E' },
+                        clay: { 500:'#C1443D', 600:'#A6362F' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0F1E1A; font-family: system-ui, -apple-system, sans-serif; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .active-nav { color: #E3B23C; background-color: #1B362C; }
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body class="text-gray-100 min-h-screen flex flex-col">
+
+    <!-- HEADER -->
+    <header class="bg-ink-800 border-b border-ink-700 p-4 sticky top-0 z-50 flex justify-between items-center shadow-md">
+        <div>
+            <h1 id="biz-name-display" class="font-black text-gold-400 text-xl tracking-tight">BIZNIS MWEN</h1>
+            <p id="t-subtitle" class="text-xs text-gray-400">Jesyon vant, kredi ak depans</p>
+        </div>
+        <div class="bg-ink-700 px-3 py-1.5 rounded-lg border border-ink-600 text-xs font-mono text-gold-400">
+            <span id="t-rate-label">Taux:</span> <span id="rate-display">135</span> HTG
+        </div>
+    </header>
+
+    <!-- KÒ APLIKASYON AN -->
+    <main class="flex-1 max-w-4xl w-full mx-auto p-4 pb-24">
+        
+        <!-- ================= ONGLET: VANT ================= -->
+        <div id="tab-sales" class="tab-content active space-y-4">
+            <div class="bg-ink-800 p-5 rounded-2xl border border-ink-600 shadow-lg">
+                <h2 id="t-new-sale" class="text-gold-400 font-bold text-lg mb-4 flex items-center gap-2">🛒 Nouvo Vant</h2>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                    <div>
+                        <label id="t-client-name-lbl" class="block text-xs text-gray-400 uppercase mb-1">Non Kliyan (Opsyonèl)</label>
+                        <input type="text" id="sale-client" class="w-full bg-ink-700 border border-ink-600 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-gold-500" placeholder="...">
+                    </div>
+                    <div>
+                        <label id="t-currency-lbl" class="block text-xs text-gray-400 uppercase mb-1">Lajan</label>
+                        <select id="sale-currency" class="w-full bg-ink-700 border border-ink-600 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-gold-500">
+                            <option value="HTG">HTG (Goud)</option>
+                            <option value="USD">USD (Dola)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="border border-ink-600 rounded-xl p-3 bg-ink-900/50 mb-4">
+                    <span id="t-cart-items-lbl" class="block text-xs font-bold text-gold-400 uppercase mb-2">Panyen / Atik</span>
+                    <div class="flex gap-2 mb-3">
+                        <select id="sale-prod-select" class="flex-1 bg-ink-700 border border-ink-600 rounded-lg p-2 text-sm text-white focus:outline-none">
+                            <option value="">-- Chwazi Pwodwi --</option>
+                        </select>
+                        <input type="number" id="sale-prod-qty" value="1" min="1" class="w-16 bg-ink-700 border border-ink-600 rounded-lg p-2 text-sm text-center text-white focus:outline-none">
+                        <button id="t-btn-add" onclick="addItemToCart()" class="bg-ink-600 hover:bg-ink-700 border border-ink-500 px-3 rounded-lg text-sm font-bold">Ajoute</button>
+                    </div>
+                    <div id="cart-list" class="space-y-1 text-sm text-gray-300 divide-y divide-ink-700"></div>
+                </div>
+
+                <div class="border border-ink-600 rounded-xl p-3 bg-ink-900/50 mb-4">
+                    <span id="t-free-amount-lbl" class="block text-xs font-bold text-gray-400 uppercase mb-1">Oswa Montan Lib (San Atik)</span>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="number" id="sale-free-amount" class="w-full bg-ink-700 border border-ink-600 rounded-lg p-2 text-sm text-white focus:outline-none" placeholder="...">
+                        <input type="text" id="sale-free-note" class="w-full bg-ink-700 border border-ink-600 rounded-lg p-2 text-sm text-white focus:outline-none" placeholder="...">
+                    </div>
+                </div>
+
+                <button id="t-btn-validate-sale" onclick="processSale()" class="w-full bg-gold-500 hover:bg-gold-600 text-ink-900 font-black py-3 rounded-xl transition text-base shadow-md">Valide Vant lan ⚡</button>
+            </div>
+
+            <div class="bg-ink-800 p-5 rounded-2xl border border-ink-600 shadow-lg">
+                <h3 id="t-recent-sales" class="text-gray-300 font-bold mb-3 flex items-center gap-2">⏱️ Dènye Vant yo</h3>
+                <div id="sales-history-list" class="space-y-2 max-h-60 overflow-y-auto"></div>
+            </div>
+        </div>
+
+        <!-- ================= ONGLET: KREDI ================= -->
+        <div id="tab-credits" class="tab-content space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-ink-800 p-5 rounded-2xl border border-ink-600 shadow-lg h-fit">
+                    <h2 id="t-add-credit-title" class="text-gold-400 font-bold mb-3">📓 Mete Yon Dèt</h2>
+                    <div class="space-y-3">
+                        <input type="text" id="credit-name" class="w-full bg-ink-700 border border-ink-600 rounded-lg p-2 text-sm text-white focus:outline-none" placeholder="...">
+                        <input type="text" id="credit-phone" class="w-full bg-ink-700 border border-ink-600 rounded-lg p-2 text-sm text-white focus:outline-none" placeholder="WhatsApp">
+                        <input type="number" id="credit-amount" class="w-full bg-ink-700 border border-ink-600 rounded-lg p-2 text-sm text-white focus:outline-none" placeholder="...">
+                        <select id="credit-currency" class="w-full bg-ink-700 border border-ink-600 rounded-lg p-2 text-sm text-white focus:outline-none">
+                            <option value="HTG">HTG</option>
+                            <option value="USD">USD</option>
+                        </select>
+                        <button id="t-btn-save-credit" onclick="addCredit()" class="w-full bg-gold-500 hover:bg-gold-600 text-ink-900 font-bold p-2 rounded-lg transition">Anrejistre Kredi</button>
+                    </div>
+                </div>
+                <div class="md:col-span-2 bg-ink-800 p-5 rounded-2xl border border-ink-600 shadow-lg">
+                    <h2 id="t-credits-list-title" class="text-gold-400 font-bold mb-3">📋 Moun ki Dwe yo</h2>
+                    <div id="credits-list" class="space-y-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= ONGLET: ENVENTÈ ================= -->
+        <div id="tab-stock" class="tab-content space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-ink-800 p-5 rounded-2xl border border-ink-600 shadow-lg h-fit">
+                    <h2 id="t-add-prod-title" class="text-gold-400 font-bold mb-3">📦 Ajoute Pwodwi</h2>
+                    <div class="space-y-3">
+                        <input type="text" id="prod-name" class="w-full bg-ink-700 border border-ink-600 rounded-lg p-2 text-sm text-white focus:outline-none" placeholder="...">
+                        <input type="number" id="prod-price" class="w-full bg-ink-700 border border-ink-600 rounded-lg p-2 text-sm text-white focus:outline-none" placeholder="...">
+                        <input type="number" id="prod-qty" class="w-full bg-ink-700 border border-ink-600 rounded-lg p-2 text-sm text-white focus:outline-none" placeholder="...">
+                        <button id="t-btn-save-prod" onclick="addProduct()" class="w-full bg-gold-500 hover:bg-gold-600 text-ink-900 font-bold p-2 rounded-lg transition">Mete nan Estòk</button>
+                    </div>
+                </div>
+                <div class="md:col-span-2 bg-ink-800 p-5 rounded-2xl border border-ink-600 shadow-lg">
+                    <h2 id="t-prod-list-title" class="text-gold-400 font-bold mb-3">🗂️ Lis Pwodwi nan Enventè</h2>
+                    <div id="products-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= ONGLET: DEPANS ================= -->
+        <div id="tab-expenses" class="tab-content space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-ink-800 p-5 rounded-2xl border border-ink-600 shadow-lg h-fit">
+                    <h2 id="t-add-exp-title" class="text-gold-400 font-bold mb-3">💸 Anrejistre Depans</h2>
+                    <div class="space-y-3">
+                        <input type="text" id="exp-desc" class="w-full bg-ink-700 border border-ink-600 rounded-lg p-2 text-sm text-white focus:outline-none" placeholder="...">
+                        <input type="number" id="exp-amount" class="w-full bg-ink-700 border border-ink-600 rounded-lg p-2 text-sm text-white focus:outline-none" placeholder="...">
+                        <button id="t-btn-save-exp" onclick="addExpense()" class="w-full bg-gold-500 hover:bg-gold-600 text-ink-900 font-bold p-2 rounded-lg transition">Mete Depans</button>
+                    </div>
+                </div>
+                <div class="md:col-span-2 bg-ink-800 p-5 rounded-2xl border border-ink-600 shadow-lg">
+                    <h2 id="t-exp-list-title" class="text-gold-400 font-bold mb-3">📉 Istorik Depans yo</h2>
+                    <div id="expenses-list" class="space-y-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= ONGLET: RAPÒ ================= -->
+        <div id="tab-reports" class="tab-content space-y-4">
+            <div class="bg-ink-800 p-5 rounded-2xl border border-ink-600 shadow-lg">
+                <h2 id="t-rep-title" class="text-gold-400 font-bold text-lg mb-4">📈 Rezime Finansye (HTG)</h2>
+                <div class="grid grid-cols-3 gap-3 text-center">
+                    <div class="bg-ink-700/50 p-4 rounded-xl border border-ink-600">
+                        <div id="t-rep-sales-lbl" class="text-xs text-gray-400 uppercase">Vant Total</div>
+                        <div id="rep-sales" class="text-lg font-black text-green-400 mt-1">0.00</div>
+                    </div>
+                    <div class="bg-ink-700/50 p-4 rounded-xl border border-ink-600">
+                        <div id="t-rep-exp-lbl" class="text-xs text-gray-400 uppercase">Depans Total</div>
+                        <div id="rep-expenses" class="text-lg font-black text-red-400 mt-1">0.00</div>
+                    </div>
+                    <div class="bg-ink-700/50 p-4 rounded-xl border border-ink-600">
+                        <div id="t-rep-profit-lbl" class="text-xs text-gray-400 uppercase">Benefis Nèt</div>
+                        <div id="rep-profit" class="text-xl font-black text-gold-400 mt-1">0.00</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= ONGLET: AJISTEMAN ================= -->
+        <div id="tab-settings" class="tab-content space-y-4">
+            <div class="bg-ink-800 p-5 rounded-2xl border border-ink-600 shadow-lg max-w-md mx-auto">
+                <h2 id="t-settings-title" class="text-gold-400 font-bold text-lg mb-4">⚙️ Konfigirasyon Biznis</h2>
+                <div class="space-y-3">
+                    <div>
+                        <label id="t-cfg-lang-lbl" class="block text-xs text-gray-400 uppercase mb-1">Lang / Langue / Language / Idioma</label>
+                        <select id="cfg-lang" onchange="changeLang(this.value)" class="w-full bg-ink-700 border border-gold-500 rounded-lg p-2 text-sm text-white font-bold focus:outline-none">
+                            <option value="ht">Kreyòl Ayisyen</option>
+                            <option value="fr">Français</option>
+                            <option value="en">English</option>
+                            <option value="es">Español</option>
+                        </select>
+                    </div>
+                    <hr class="border-ink-600 my-2">
+                    <div>
+                        <label id="t-cfg-name-lbl" class="block text-xs text-gray-400 uppercase mb-1">Non Biznis la</label>
+                        <input type="text" id="cfg-name" class="w-full bg-ink-700 border border-ink-600 rounded-lg p-2 text-sm text-white focus:outline-none">
+                    </div>
+                    <div>
+                        <label id="t-cfg-rate-lbl" class="block text-xs text-gray-400 uppercase mb-1">To Chanjman (1 USD = ? HTG)</label>
+                        <input type="number" id="cfg-rate" class="w-full bg-ink-700 border border-ink-600 rounded-lg p-2 text-sm text-white focus:outline-none">
+                    </div>
+                    <button id="t-btn-save-settings" onclick="saveSettings()" class="w-full bg-gold-500 hover:bg-gold-600 text-ink-900 font-bold py-2 rounded-lg transition">Anrejistre Chanjman yo</button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- RESI MODAL -->
+    <div id="receipt-modal" class="fixed inset-0 bg-black/85 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white text-gray-900 rounded-2xl w-full max-w-sm p-5 font-mono text-sm shadow-2xl">
+            <div class="text-center font-black text-lg border-b pb-2 mb-2" id="rec-biz-name">BIZNIS</div>
+            <div class="text-center text-xs text-gray-500 uppercase mb-3" id="t-rec-title">Resi Vant Ofisyèl</div>
+            <div class="space-y-1 mb-3 text-xs">
+                <div><b id="t-rec-date-lbl">Dat:</b> <span id="rec-date"></span></div>
+                <div><b id="t-rec-client-lbl">Kliyan:</b> <span id="rec-client"></span></div>
+            </div>
+            <div class="border-b my-2"></div>
+            <div id="rec-items" class="space-y-1 my-2"></div>
+            <div class="border-b my-2"></div>
+            <div class="flex justify-between font-black text-base pt-1">
+                <span id="t-rec-total-lbl">TOTAL:</span>
+                <span id="rec-total">0.00 HTG</span>
+            </div>
+            <div class="text-center text-xs text-gray-400 mt-6" id="t-rec-footer">Mèsi pou konfyans ou! 😊</div>
+            <div class="grid grid-cols-2 gap-2 mt-6 no-print">
+                <button id="t-btn-print" onclick="window.print()" class="bg-gray-800 text-white font-bold p-2 rounded-lg text-xs">Enprime</button>
+                <button id="t-btn-close" onclick="closeReceipt()" class="bg-red-600 text-white font-bold p-2 rounded-lg text-xs">Fèmen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NAVBAR ANBA -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-ink-800 border-t border-ink-700 py-2 px-1 z-40 shadow-2xl">
+        <div class="max-w-md mx-auto flex justify-between text-center">
+            <button onclick="switchTab('sales')" id="nav-sales" class="flex-1 py-1 rounded-xl text-gray-400 active-nav">
+                <div class="text-lg">🛒</div><div id="b-nav-sales" class="text-[10px] font-bold">Vant</div>
+            </button>
+            <button onclick="switchTab('credits')" id="nav-credits" class="flex-1 py-1 rounded-xl text-gray-400">
+                <div class="text-lg">📓</div><div id="b-nav-credits" class="text-[10px] font-bold">Kredi</div>
+            </button>
+            <button onclick="switchTab('stock')" id="nav-stock" class="flex-1 py-1 rounded-xl text-gray-400">
+                <div class="text-lg">📦</div><div id="b-nav-stock" class="text-[10px] font-bold">Estòk</div>
+            </button>
+            <button onclick="switchTab('expenses')" id="nav-expenses" class="flex-1 py-1 rounded-xl text-gray-400">
+                <div class="text-lg">💸</div><div id="b-nav-expenses" class="text-[10px] font-bold">Depans</div>
+            </button>
+            <button onclick="switchTab('reports')" id="nav-reports" class="flex-1 py-1 rounded-xl text-gray-400">
+                <div class="text-lg">📈</div><div id="b-nav-reports" class="text-[10px] font-bold">Rapò</div>
+            </button>
+            <button onclick="switchTab('settings')" id="nav-settings" class="flex-1 py-1 rounded-xl text-gray-400">
+                <div class="text-lg">⚙️</div><div id="b-nav-settings" class="text-[10px] font-bold">Ajisteman</div>
+            </button>
+        </div>
+    </nav>
+
+    <!-- DIKSYONÈ TRADIKSYON -->
+    <script>
+        const languages = {
+            ht: {
+                subtitle: "Jesyon vant, kredi ak depans", rate: "To:", newSale: "🛒 Nouvo Vant", clientLbl: "Non Kliyan (Opsyonèl)",
+                currency: "Lajan", cartItems: "Panyen / Atik", btnAdd: "Ajoute", freeAmt: "Oswa Montan Lib (San Atik)",
+                btnValidate: "Valide Vant lan ⚡", recentSales: "⏱️ Dènye Vant yo", addCredit: "📓 Mete Yon Dèt",
+                creditsList: "📋 Moun ki Dwe yo", btnSaveCredit: "Anrejistre Kredi", addProd: "📦 Ajoute Pwodwi",
+                prodList: "🗂️ Lis Pwodwi nan Enventè", btnSaveProd: "Mete nan Estòk", addExp: "💸 Anrejistre Depans",
+                expList: "📉 Istorik Depans yo", btnSaveExp: "Mete Depans", repTitle: "📈 Rezime Finansye (HTG)",
+                repSales: "Vant Total", repExp: "Depans Total", repProfit: "Benefis Nèt", settingsTitle: "⚙️ Konfigirasyon Biznis",
+                cfgLang: "Lang / Langue / Language / Idioma", cfgName: "Non Biznis la", cfgRate: "To Chanjman (1 USD = ? HTG)",
+                btnSaveSettings: "Anrejistre Chanjman yo", recTitle: "Resi Vant Ofisyèl", recDate: "Dat:", recClient: "Kliyan:",
+                recTotal: "TOTAL:", recFooter: "Mèsi pou konfyans ou! 😊", btnPrint: "Enprime", btnClose: "Fèmen",
+                navSales: "Vant", navCredits: "Kredi", navStock: "Estòk", navExpenses: "Depans", navReports: "Rapò", navSettings: "Ajisteman",
+                pAnon: "Kliyan Anonim", pChoose: "-- Chwazi Pwodwi --", pQty: "Kantite nan estòk", pNoSales: "Poko gen okenn vant.",
+                pNoCredits: "Pa gen dèt pou kounye a.", pNoExp: "Pa gen depans ankò.", pPay: "Peye ✅", pDel: "Efase", alertFields: "Tanpri ranpli tout chan yo kòrèkteman!",
+                alertCart: "Tanpri ajoute yon pwodwi nan panyen an oswa mete yon montan lib.", alertSave: "Ajisteman yo anrejistre pafetman!",
+                pPlaceHolderClient: "Kliyan Anonim", pPlaceHolderAmt: "Montan", pPlaceHolderDesc: "Deskripsyon", pPlaceHolderProd: "Non pwodwi",
+                pPlaceHolderPrice: "Pri vann", pPlaceHolderQty: "Kantite", pPlaceHolderExp: "Pou ki sa?"
+            },
+            fr: {
+                subtitle: "Gestion des ventes, crédits et dépenses", rate: "Taux:", newSale: "🛒 Nouvelle Vente", clientLbl: "Nom du Client (Optionnel)",
+                currency: "Devise", cartItems: "Panier / Articles", btnAdd: "Ajouter", freeAmt: "Ou Montant Libre (Sans Article)",
+                btnValidate: "Valider la Vente ⚡", recentSales: "⏱️ Ventes Récentes", addCredit: "📓 Ajouter une Dette",
+                creditsList: "📋 Liste des Débiteurs", btnSaveCredit: "Enregistrer le Crédit", addProd: "📦 Ajouter un Produit",
+                prodList: "🗂️ Liste des Produits en Stock", btnSaveProd: "Ajouter au Stock", addExp: "💸 Enregistrer une Dépense",
+                expList: "📉 Historique des Dépenses", btnSaveExp: "Ajouter la Dépense", repTitle: "📈 Résumé Financier (HTG)",
+                repSales: "Ventes Totales", repExp: "Total Dépenses", repProfit: "Bénéfice Net", settingsTitle: "⚙️ Configuration de l'Entreprise",
+                cfgLang: "Lang / Langue / Language / Idioma", cfgName: "Nom de l'Entreprise", cfgRate: "Taux de Change (1 USD = ? HTG)",
+                btnSaveSettings: "Enregistrer les Modifications", recTitle: "Reçu de Vente Officiel", recDate: "Date:", recClient: "Client:",
+                recTotal: "TOTAL:", recFooter: "Merci pour votre confiance! 😊", btnPrint: "Imprimer", btnClose: "Fermer",
+                navSales: "Ventes", navCredits: "Crédits", navStock: "Stock", navExpenses: "Dépenses", navReports: "Rapports", navSettings: "Config",
+                pAnon: "Client Anonyme", pChoose: "-- Choisir un Produit --", pQty: "Quantité en stock", pNoSales: "Aucune vente pour le moment.",
+                pNoCredits: "Aucune dette pour le moment.", pNoExp: "Aucune dépense enregistrée.", pPay: "Payé ✅", pDel: "Supprimer", alertFields: "Veuillez remplir les champs correctement!",
+                alertCart: "Veuillez ajouter un produit au panier ou saisir un montant libre.", alertSave: "Configurations enregistrées avec succès!",
+                pPlaceHolderClient: "Client Anonyme", pPlaceHolderAmt: "Montant", pPlaceHolderDesc: "Description", pPlaceHolderProd: "Nom du produit",
+                pPlaceHolderPrice: "Prix de vente", pPlaceHolderQty: "Quantité", pPlaceHolderExp: "Pour quoi faire?"
+            },
+            en: {
+                subtitle: "Sales, credits and expenses management", rate: "Rate:", newSale: "🛒 New Sale", clientLbl: "Customer Name (Optional)",
+                currency: "Currency", cartItems: "Cart / Items", btnAdd: "Add", freeAmt: "Or Custom Amount (No Item)",
+                btnValidate: "Complete Sale ⚡", recentSales: "⏱️ Recent Sales", addCredit: "📓 Add a Debt",
+                creditsList: "📋 Debtors List", btnSaveCredit: "Save Credit", addProd: "📦 Add Product",
+                prodList: "🗂️ Product Inventory List", btnSaveProd: "Add to Stock", addExp: "💸 Record Expense",
+                expList: "📉 Expense History", btnSaveExp: "Save Expense", repTitle: "📈 Financial Summary (HTG)",
+                repSales: "Total Sales", repExp: "Total Expenses", repProfit: "Net Profit", settingsTitle: "⚙️ Business Settings",
+                cfgLang: "Lang / Langue / Language / Idioma", cfgName: "Business Name", cfgRate: "Exchange Rate (1 USD = ? HTG)",
+                btnSaveSettings: "Save Settings", recTitle: "Official Sales Receipt", recDate: "Date:", recClient: "Customer:",
+                recTotal: "TOTAL:", recFooter: "Thank you for your business! 😊", btnPrint: "Print", btnClose: "Close",
+                navSales: "Sales", navCredits: "Credits", navStock: "Stock", navExpenses: "Expenses", navReports: "Reports", navSettings: "Settings",
+                pAnon: "Anonymous Customer", pChoose: "-- Choose Product --", pQty: "Qty in stock", pNoSales: "No sales recorded yet.",
+                pNoCredits: "No outstanding debts.", pNoExp: "No expenses recorded yet.", pPay: "Paid ✅", pDel: "Delete", alertFields: "Please fill in fields correctly!",
+                alertCart: "Please add an item to the cart or enter a custom amount.", alertSave: "Settings saved successfully!",
+                pPlaceHolderClient: "Anonymous Customer", pPlaceHolderAmt: "Amount", pPlaceHolderDesc: "Description", pPlaceHolderProd: "Product name",
+                pPlaceHolderPrice: "Selling price", pPlaceHolderQty: "Quantity", pPlaceHolderExp: "What for?"
+            },
+            es: {
+                subtitle: "Gestión de ventas, créditos y gastos", rate: "Tasa:", newSale: "🛒 Nueva Venta", clientLbl: "Nombre del Cliente (Opcional)",
+                currency: "Moneda", cartItems: "Carrito / Artículos", btnAdd: "Añadir", freeAmt: "O Cantidad Libre (Sin Artículo)",
+                btnValidate: "Validar Venta ⚡", recentSales: "⏱️ Ventas Recientes", addCredit: "📓 Añadir una Deuda",
+                creditsList: "📋 Lista de Deudores", btnSaveCredit: "Registrar Crédito", addProd: "📦 Añadir Producto",
+                prodList: "🗂️ Lista de Inventario de Productos", btnSaveProd: "Añadir al Stock", addExp: "💸 Registrar Gasto",
+                expList: "📉 Historial de Gastos", btnSaveExp: "Guardar Gasto", repTitle: "📈 Resumen Financiero (HTG)",
+                repSales: "Ventas Totales", repExp: "Total Gastos", repProfit: "Beneficio Neto", settingsTitle: "⚙️ Configuración del Negocio",
+                cfgLang: "Lang / Langue / Language / Idioma", cfgName: "Nombre del Negocio", cfgRate: "Tipo de Cambio (1 USD = ? HTG)",
+                btnSaveSettings: "Guardar Cambios", recTitle: "Recibo de Venta Oficial", recDate: "Fecha:", recClient: "Cliente:",
+                recTotal: "TOTAL:", recFooter: "¡Gracias por su confianza! 😊", btnPrint: "Imprimir", btnClose: "Cerrar",
+                navSales: "Ventas", navCredits: "Créditos", navStock: "Stock", navExpenses: "Gastos", navReports: "Informes", navSettings: "Config",
+                pAnon: "Cliente Anónimo", pChoose: "-- Elegir Producto --", pQty: "Cant. en stock", pNoSales: "No hay ventas registradas.",
+                pNoCredits: "No hay deudas pendientes.", pNoExp: "No hay gastos registrados.", pPay: "Pagado ✅", pDel: "Eliminar", alertFields: "¡Por favor llene los campos correctamente!",
+                alertCart: "Por favor añada un artículo al carrito o ingrese un monto libre.", alertSave: "¡Configuración guardada con éxito!",
+                pPlaceHolderClient: "Cliente Anónimo", pPlaceHolderAmt: "Monto", pPlaceHolderDesc: "Descripción", pPlaceHolderProd: "Nombre del producto",
+                pPlaceHolderPrice: "Precio de venta", pPlaceHolderQty: "Cantidad", pPlaceHolderExp: "¿Para qué?"
+            }
+        };
+
+        let currentLang = 'ht';
+
+        function applyLanguage() {
+            const l = languages[currentLang];
+            
+            // Tèks yo
+            document.getElementById('t-subtitle').innerText = l.subtitle;
+            document.getElementById('t-rate-label').innerText = l.rate;
+            document.getElementById('t-new-sale').innerHTML = l.newSale;
+            document.getElementById('t-client-name-lbl').innerText = l.clientLbl;
+            document.getElementById('t-currency-lbl').innerText = l.currency;
+            document.getElementById('t-cart-items-lbl').innerText = l.cartItems;
+            document.getElementById('t-btn-add').innerText = l.btnAdd;
+            document.getElementById('t-free-amount-lbl').innerText = l.freeAmt;
+            document.getElementById('t-btn-validate-sale').innerText = l.btnValidate;
+            document.getElementById('t-recent-sales').innerHTML = l.recentSales;
+            document.getElementById('t-add-credit-title').innerHTML = l.addCredit;
+            document.getElementById('t-credits-list-title').innerHTML = l.creditsList;
+            document.getElementById('t-btn-save-credit').innerText = l.btnSaveCredit;
+            document.getElementById('t-add-prod-title').innerHTML = l.addProd;
+            document.getElementById('t-prod-list-title').innerHTML = l.prodList;
+            document.getElementById('t-btn-save-prod').innerText = l.btnSaveProd;
+            document.getElementById('t-add-exp-title').innerHTML = l.addExp;
+            document.getElementById('t-exp-list-title').innerHTML = l.expList;
+            document.getElementById('t-btn-save-exp').innerText = l.btnSaveExp;
+            document.getElementById('t-rep-title').innerHTML = l.repTitle;
+            document.getElementById('t-rep-sales-lbl').innerText = l.repSales;
+            document.getElementById('t-rep-exp-lbl').innerText = l.repExp;
+            document.getElementById('t-rep-profit-lbl').innerText = l.repProfit;
+            document.getElementById('t-settings-title').innerHTML = l.settingsTitle;
+            document.getElementById('t-cfg-lang-lbl').innerText = l.cfgLang;
+            document.getElementById('t-cfg-name-lbl').innerText = l.cfgName;
+            document.getElementById('t-cfg-rate-lbl').innerText = l.cfgRate;
+            document.getElementById('t-btn-save-settings').innerText = l.btnSaveSettings;
+            
+            // Modal Resi
+            document.getElementById('t-rec-title').innerText = l.recTitle;
+            document.getElementById('t-rec-date-lbl').innerText = l.recDate;
+            document.getElementById('t-rec-client-lbl').innerText = l.recClient;
+            document.getElementById('t-rec-total-lbl').innerText = l.recTotal;
+            document.getElementById('t-rec-footer').innerText = l.recFooter;
+            document.getElementById('t-btn-print').innerText = l.btnPrint;
+            document.getElementById('t-btn-close').innerText = l.btnClose;
+
+            // Nav bar anba
+            document.getElementById('b-nav-sales').innerText = l.navSales;
+            document.getElementById('b-nav-credits').innerText = l.navCredits;
+            document.getElementById('b-nav-stock').innerText = l.navStock;
+            document.getElementById('b-nav-expenses').innerText = l.navExpenses;
+            document.getElementById('b-nav-reports').innerText = l.navReports;
+            document.getElementById('b-nav-settings').innerText = l.navSettings;
+
+            // Placeholders dinamik
+            document.getElementById('sale-client').placeholder = l.pPlaceHolderClient;
+            document.getElementById('sale-free-amount').placeholder = l.pPlaceHolderAmt;
+            document.getElementById('sale-free-note').placeholder = l.pPlaceHolderDesc;
+            document.getElementById('credit-name').placeholder = l.pAnon;
+            document.getElementById('credit-amount').placeholder = l.pPlaceHolderAmt;
+            document.getElementById('prod-name').placeholder = l.pPlaceHolderProd;
+            document.getElementById('prod-price').placeholder = l.pPlaceHolderPrice;
+            document.getElementById('prod-qty').placeholder = l.pPlaceHolderQty;
+            document.getElementById('exp-desc').placeholder = l.pPlaceHolderExp;
+            document.getElementById('exp-amount').placeholder = l.pPlaceHolderAmt;
+
+            document.getElementById('cfg-lang').value = currentLang;
+            updateUI();
+        }
+
+        function changeLang(langCode) {
+            currentLang = langCode;
+            appData.settings.lang = langCode;
+            saveToStorage();
+            applyLanguage();
+        }
+    </script>
+
+    <!-- LOGIK KÒD APLIKASYON AN -->
+    <script>
+        let appData = {
+            settings: { businessName: "KayeKlè Boutik", exchangeRate: 135, lang: "ht" },
+            sales: [], credits: [], inventory: [], expenses: []
+        };
+        let currentCart = [];
+
+        function loadData() {
+            const raw = localStorage.getItem('kayekle_clean_data');
+            if (raw) {
+                try { appData = JSON.parse(raw); } catch(e) {}
+            }
+            if(!appData.settings) appData.settings = { businessName: "KayeKlè Boutik", exchangeRate: 135, lang: "ht" };
+            if(!appData.sales) appData.sales = [];
+            if(!appData.credits) appData.credits = [];
+            if(!appData.inventory) appData.inventory = [];
+            if(!appData.expenses) appData.expenses = [];
+            
+            currentLang = appData.settings.lang || 'ht';
+            saveToStorage();
+            applyLanguage();
+        }
+
+        function saveToStorage() {
+            localStorage.setItem('kayekle_clean_data', JSON.stringify(appData));
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('nav button').forEach(el => el.classList.remove('active-nav'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+            document.getElementById('nav-' + tabId).classList.add('active-nav');
+        }
+
+        function fmt(num) {
+            return (Math.round(num * 100) / 100).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+
+        function updateUI() {
+            const l = languages[currentLang];
+            document.getElementById('biz-name-display').innerText = appData.settings.businessName.toUpperCase();
+            document.getElementById('rate-display').innerText = appData.settings.exchangeRate;
+            document.getElementById('cfg-name').value = appData.settings.businessName;
+            document.getElementById('cfg-rate').value = appData.settings.exchangeRate;
+
+            const sel = document.getElementById('sale-prod-select');
+            sel.innerHTML = `<option value="">${l.pChoose}</option>`;
+            appData.inventory.forEach(p => {
+                sel.innerHTML += `<option value="${p.id}">${p.name} (${p.qty} ${l.pQty.toLowerCase()}) - ${p.price} HTG</option>`;
+            });
+
+            const pList = document.getElementById('products-list');
+            pList.innerHTML = '';
+            appData.inventory.forEach(p => {
+                const lowStock = p.qty <= 3 ? 'text-red-400 font-bold' : 'text-gray-300';
+                pList.innerHTML += `
+                    <div class="p-3 bg-ink-700/40 rounded-xl border border-ink-600 flex justify-between items-center">
+                        <div>
+                            <div class="font-bold text-sm text-gold-400">${p.name}</div>
+                            <div class="text-xs ${lowStock}">${l.pQty}: ${p.qty}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm font-black">${fmt(p.price)} HTG</div>
+                            <button onclick="deleteProduct('${p.id}')" class="text-[10px] text-red-400 underline mt-1 block">${l.pDel}</button>
+                        </div>
+                    </div>`;
+            });
+
+            const sHist = document.getElementById('sales-history-list');
+            sHist.innerHTML = appData.sales.length === 0 ? `<p class="text-xs text-gray-500">${l.pNoSales}</p>` : '';
+            appData.sales.forEach(s => {
+                sHist.innerHTML += `
+                    <div class="p-2.5 bg-ink-700/30 rounded-lg border border-ink-600/40 flex justify-between items-center text-xs">
+                        <div>
+                            <div class="font-bold text-gray-200">${s.client === 'Kliyan Anonim' ? l.pAnon : s.client}</div>
+                            <div class="text-[10px] text-gray-500">${new Date(s.date).toLocaleString()}</div>
+                        </div>
+                        <div class="text-gold-400 font-bold">${fmt(s.amountHTG)} HTG</div>
+                    </div>`;
+            });
+
+            const cList = document.getElementById('credits-list');
+            cList.innerHTML = appData.credits.length === 0 ? `<p class="text-xs text-gray-500">${l.pNoCredits}</p>` : '';
+            appData.credits.forEach(c => {
+                cList.innerHTML += `
+                    <div class="p-3 bg-ink-700/30 border border-ink-600 rounded-xl flex justify-between items-center text-sm">
+                        <div>
+                            <div class="font-bold text-gray-200">${c.name}</div>
+                            <div class="text-xs text-gray-400">${c.phone || ''}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-black text-red-400">${fmt(c.amount)} ${c.currency}</div>
+                            <button onclick="clearCredit('${c.id}')" class="text-xs bg-green-600 text-white px-2 py-0.5 rounded mt-1 font-bold">${l.pPay}</button>
+                        </div>
+                    </div>`;
+            });
+
+            const eList = document.getElementById('expenses-list');
+            eList.innerHTML = appData.expenses.length === 0 ? `<p class="text-xs text-gray-500">${l.pNoExp}</p>` : '';
+            appData.expenses.forEach(e => {
+                eList.innerHTML += `
+                    <div class="p-2.5 bg-ink-700/30 rounded-lg border border-ink-600/40 flex justify-between items-center text-xs">
+                        <div><span class="font-bold">${e.desc}</span></div>
+                        <div class="text-red-400 font-bold">-${fmt(e.amount)} HTG</div>
+                    </div>`;
+            });
+
+            let totalSales = appData.sales.reduce((sum, s) => sum + s.amountHTG, 0);
+            let totalExp = appData.expenses.reduce((sum, e) => sum + e.amount, 0);
+            document.getElementById('rep-sales').innerText = fmt(totalSales);
+            document.getElementById('rep-expenses').innerText = fmt(totalExp);
+            document.getElementById('rep-profit').innerText = fmt(totalSales - totalExp);
+        }
+
+        function addItemToCart() {
+            const pId = document.getElementById('sale-prod-select').value;
+            const qty = parseInt(document.getElementById('sale-prod-qty').value) || 1;
+            if(!pId) return;
+
+            const prod = appData.inventory.find(p => p.id === pId);
+            if(prod) {
+                currentCart.push({ id: prod.id, name: prod.name, qty: qty, price: prod.price });
+                document.getElementById('sale-prod-qty').value = 1;
+                renderCart();
+            }
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cart-list');
+            container.innerHTML = '';
+            currentCart.forEach((item, index) => {
+                container.innerHTML += `
+                    <div class="flex justify-between py-1 text-xs">
+                        <span>${item.name} (x${item.qty})</span>
+                        <div class="flex gap-2">
+                            <span>${fmt(item.qty * item.price)} HTG</span>
+                            <button onclick="currentCart.splice(${index},1); renderCart();" class="text-red-400 font-bold">&times;</button>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        function processSale() {
+            const l = languages[currentLang];
+            const client = document.getElementById('sale-client').value || l.pAnon;
+            const cur = document.getElementById('sale-currency').value;
+            const freeAmt = parseFloat(document.getElementById('sale-free-amount').value) || 0;
+            const freeNote = document.getElementById('sale-free-note').value || (currentLang === 'ht' ? 'Vant Lib' : 'Custom Sale');
+            
+            let amountHTG = 0;
+            let receiptItemsHTML = '';
+
+            if (currentCart.length > 0) {
+                currentCart.forEach(item => {
+                    amountHTG += (item.qty * item.price);
+                    receiptItemsHTML += `<div class="flex justify-between"><span>${item.name} x${item.qty}</span><span>${fmt(item.qty * item.price)} HTG</span></div>`;
+                    let p = appData.inventory.find(i => i.id === item.id);
+                    if(p) p.qty = Math.max(0, p.qty - item.qty);
+                });
+            } else if (freeAmt > 0) {
+                amountHTG = cur === 'USD' ? (freeAmt * appData.settings.exchangeRate) : freeAmt;
+                receiptItemsHTML = `<div class="flex justify-between"><span>${freeNote}</span><span>${fmt(amountHTG)} HTG</span></div>`;
+            } else {
+                alert(l.alertCart);
+                return;
+            }
+
+            const newSale = {
+                id: Date.now().toString(),
+                date: new Date().toISOString(),
+                client: client,
+                amountHTG: amountHTG
+            };
+
+            appData.sales.unshift(newSale);
+            saveToStorage();
+            
+            document.getElementById('rec-biz-name').innerText = appData.settings.businessName.toUpperCase();
+            document.getElementById('rec-date').innerText = new Date().toLocaleString();
+            document.getElementById('rec-client').innerText = client;
+            document.getElementById('rec-items').innerHTML = receiptItemsHTML;
+            document.getElementById('rec-total').innerText = fmt(amountHTG) + " HTG";
+            document.getElementById('receipt-modal').classList.remove('hidden');
+
+            currentCart = [];
+            renderCart();
+            document.getElementById('sale-client').value = '';
+            document.getElementById('sale-free-amount').value = '';
+            document.getElementById('sale-free-note').value = '';
+            updateUI();
+        }
+
+        function closeReceipt() {
+            document.getElementById('receipt-modal').classList.add('hidden');
+        }
+
+        function addProduct() {
+            const l = languages[currentLang];
+            const name = document.getElementById('prod-name').value;
+            const price = parseFloat(document.getElementById('prod-price').value) || 0;
+            const qty = parseInt(document.getElementById('prod-qty').value) || 0;
+
+            if(!name || price <= 0) return alert(l.alertFields);
+
+            appData.inventory.push({ id: Date.now().toString(), name, price, qty });
+            saveToStorage();
+            updateUI();
+
+            document.getElementById('prod-name').value = '';
+            document.getElementById('prod-price').value = '';
+            document.getElementById('prod-qty').value = '';
+        }
+
+        function deleteProduct(id) {
+            appData.inventory = appData.inventory.filter(p => p.id !== id);
+            saveToStorage(); updateUI();
+        }
+
+        function addCredit() {
+            const l = languages[currentLang];
+            const name = document.getElementById('credit-name').value;
+            const phone = document.getElementById('credit-phone').value;
+            const amount = parseFloat(document.getElementById('credit-amount').value) || 0;
+            const currency = document.getElementById('credit-currency').value;
+
+            if(!name || amount <= 0) return alert(l.alertFields);
+
+            appData.credits.push({ id: Date.now().toString(), name, phone, amount, currency });
+            saveToStorage(); updateUI();
+
+            document.getElementById('credit-name').value = '';
+            document.getElementById('credit-phone').value = '';
+            document.getElementById('credit-amount').value = '';
+        }
+
+        function clearCredit(id) {
+            appData.credits = appData.credits.filter(c => c.id !== id);
+            saveToStorage(); updateUI();
+        }
+
+        function addExpense() {
+            const l = languages[currentLang];
+            const desc = document.getElementById('exp-desc').value;
+            const amount = parseFloat(document.getElementById('exp-amount').value) || 0;
+
+            if(!desc || amount <= 0) return alert(l.alertFields);
+
+            appData.expenses.unshift({ id: Date.now().toString(), desc, amount });
+            saveToStorage(); updateUI();
+
+            document.getElementById('exp-desc').value = '';
+            document.getElementById('exp-amount').value = '';
+        }
+
+        function saveSettings() {
+            const l = languages[currentLang];
+            appData.settings.businessName = document.getElementById('cfg-name').value || "Biznis Mwen";
+            appData.settings.exchangeRate = parseFloat(document.getElementById('cfg-rate').value) || 135;
+            saveToStorage(); updateUI();
+            alert(l.alertSave);
+        }
+
+        window.onload = loadData;
+    </script>
+</body>
+</html>
